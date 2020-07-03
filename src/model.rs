@@ -34,6 +34,9 @@ impl fmt::Display for Error {
 
 impl std::error::Error for Error {}
 
+pub type BlockHeight = i64;
+pub type InlineFee = String;
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Times {
     pub ap_time: DateTime<Utc>,
@@ -42,7 +45,7 @@ pub struct Times {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Validators {
-    pub block_height: i64,
+    pub block_height: BlockHeight,
     pub validators: Vec<Validator>,
 }
 
@@ -89,7 +92,7 @@ pub struct ValidatorInfo {
 pub struct SyncInfo {
     pub latest_block_hash: String,
     pub latest_app_hash: String,
-    pub latest_block_height: i64,
+    pub latest_block_height: BlockHeight,
     pub latest_block_time: DateTime<Utc>,
     pub catching_up: bool,
 }
@@ -119,16 +122,6 @@ pub struct ResultStatus {
     pub sync_info: SyncInfo,
     pub node_info: NodeInfo,
 }
-
-/*
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct Transaction {
-    hash: String,
-    log: String,
-    data: String,
-    height: String
-}
-*/
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Balance {
@@ -287,6 +280,123 @@ pub struct Order {
 pub struct OrderList {
     #[serde(rename = "order")]
     pub orders: Vec<Order>,
-    pub total: i32, // if required number wasn't specified in
-                    // the request, total will be set to -1
+    pub total: i32,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TickerStatistics {
+    symbol: String,
+    quote_asset_name: String,
+    base_asset_name: String,
+    ask_price: Fixed8,
+    ask_quantity: Fixed8,
+    bid_price: Fixed8,
+    bid_quantity: Fixed8,
+    close_time: u64,
+    count: u64,
+    first_id: String,
+    high_price: Fixed8,
+    last_id: String,
+    last_price: Fixed8,
+    last_quantity: Fixed8,
+    low_price: Fixed8,
+    open_price: Fixed8,
+    open_time: u64,
+    prev_close_price: Fixed8,
+    price_change: Fixed8,
+    price_change_percent: String, // probably should parse into a f64? not sure
+    quote_volume: Fixed8,
+    volume: Fixed8,
+    weighted_avg_price: Fixed8,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TradePage {
+    total: i32,
+    #[serde(rename = "trade")]
+    trades: Vec<Trade>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+pub enum TickType {
+    Unknown,
+    SellTaker,
+    BuyTaker,
+    BuySurplus,
+    SellSurplus,
+    Neutral,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Trade {
+    pub base_asset: String,
+    pub block_height: BlockHeight,
+    pub buy_fee: InlineFee,
+    pub buyer_id: String,
+    pub buyer_order_id: String,
+    pub buy_single_fee: InlineFee,
+    pub buyer_source: i64,
+    pub price: Fixed8,
+    pub quantity: Fixed8,
+    pub quote_asset: String,
+    pub sell_fee: InlineFee,
+    pub seller_id: String,
+    pub seller_order_id: String,
+    pub sell_single_fee: InlineFee,
+    pub seller_source: i64,
+    pub symbol: String,
+    pub tick_type: TickType,
+    pub time: u64,
+    pub trade_id: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct BlockExchangeFeePage {
+    #[serde(rename = "blockExchangeFee")]
+    block_exchange_fees: Vec<BlockExchangeFee>,
+    total: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct BlockExchangeFee {
+    address: String,
+    block_height: BlockHeight,
+    block_time: u64,
+    fee: InlineFee,
+    trade_count: u64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct AtomicSwapPage {
+    atomic_swaps: Vec<AtomicSwap>,
+    total: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct AtomicSwap {
+    block_timestamp: u64,
+    closed_time: Option<u64>,
+    cross_chain: i64,
+    expected_income: String,
+    expire_height: i64,
+    from_addr: String,
+    to_addr: String,
+    in_amount: Option<String>,
+    out_amount: Option<String>,
+    random_number: Option<String>,
+    random_number_hash: String,
+    recipient_other_chain: String,
+    status: i64,
+    swap_id: String,
+    timestamp: u64, // MEASURED IN SECONDS
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Dummy {
+    _id: String,
 }

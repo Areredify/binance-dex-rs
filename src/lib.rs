@@ -10,11 +10,15 @@ pub use model::query::Query;
 mod tests {
     use super::*;
 
-    fn test_query<Q: Query>(q: Q) -> Fallible<Q::Response> {
+    fn test_query<Q: Query>(q: Q) -> Fallible<Q::Response>
+    where
+        Q::Response: std::fmt::Debug,
+    {
         let client = BitChainClient::new();
         let mut rt = tokio::runtime::Runtime::new()?;
-
-        Ok(rt.block_on(client.query(q))?)
+        let response = rt.block_on(client.query(q))?;
+        dbg!(&response);
+        Ok(response)
     }
 
     use failure::Fallible;
@@ -49,7 +53,7 @@ mod tests {
     #[test]
     fn account() -> Fallible<()> {
         test_query(query::Account {
-            address: "bnb1jxfh2g85q3v0tdq56fnevx6xcxtcnhtsmcu64m".into(),
+            address: "tbnb1g9rzc0e2jf8ef3qp9ax8h0pmpmvjzwmtq4jxfr".into(),
         })?;
 
         Ok(())
@@ -58,7 +62,7 @@ mod tests {
     #[test]
     fn account_sequence() -> Fallible<()> {
         test_query(query::AccountSequence {
-            address: "bnb1jxfh2g85q3v0tdq56fnevx6xcxtcnhtsmcu64m".into(),
+            address: "tbnb1g9rzc0e2jf8ef3qp9ax8h0pmpmvjzwmtq4jxfr".into(),
         })?;
 
         Ok(())
@@ -94,7 +98,7 @@ mod tests {
     #[test]
     fn depth() -> Fallible<()> {
         test_query(query::MarketDepth {
-            symbol: "RUNE-B1A_BNB".into(),
+            symbol: "CLIS-EFE_BNB".into(),
             limit: None,
         })?;
 
@@ -104,7 +108,7 @@ mod tests {
     #[test]
     fn candlestick() -> Fallible<()> {
         test_query(query::Candlestick {
-            symbol: "RUNE-B1A_BNB".into(),
+            symbol: "CLIS-EFE_BNB".into(),
             interval: query::Intervals::T1d,
             limit: None,
             start_time: None,
@@ -126,7 +130,7 @@ mod tests {
     #[test]
     fn open_orders() -> Fallible<()> {
         test_query(query::OpenOrders {
-            address: "bnb1ggwgrtnglus40qmpn59raw0g9f99s9m545a9ke".into(),
+            address: "tbnb1g9rzc0e2jf8ef3qp9ax8h0pmpmvjzwmtq4jxfr".into(),
             ..Default::default()
         })?;
 
@@ -136,8 +140,54 @@ mod tests {
     #[test]
     fn closed_orders() -> Fallible<()> {
         test_query(query::ClosedOrders {
-            address: "bnb1ggwgrtnglus40qmpn59raw0g9f99s9m545a9ke".into(),
+            address: "tbnb1g9rzc0e2jf8ef3qp9ax8h0pmpmvjzwmtq4jxfr".into(),
             ..Default::default()
+        })?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn market_ticker() -> Fallible<()> {
+        test_query(query::MarketTicker24hr { symbol: None })?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn trades() -> Fallible<()> {
+        test_query(query::Trades {
+            address: Some("tbnb1g9rzc0e2jf8ef3qp9ax8h0pmpmvjzwmtq4jxfr".into()),
+            ..Default::default()
+        })?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn block_exchange_fees() -> Fallible<()> {
+        test_query(query::BlockExchangeFee {
+            address: "tbnb1g9rzc0e2jf8ef3qp9ax8h0pmpmvjzwmtq4jxfr".into(),
+            ..Default::default()
+        })?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn atomic_swaps() -> Fallible<()> {
+        test_query(query::AtomicSwaps {
+            from_address: Some("tbnb1g9rzc0e2jf8ef3qp9ax8h0pmpmvjzwmtq4jxfr".into()),
+            ..Default::default()
+        })?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn atomic_swap() -> Fallible<()> {
+        test_query(query::AtomicSwap {
+            id: "13c037bcd3ce892bae0e7c42f9aaafad98a084c51f5363507ef0481270697d32".into(),
         })?;
 
         Ok(())

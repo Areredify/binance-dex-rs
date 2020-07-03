@@ -46,8 +46,12 @@ impl BitChainClient {
                 }
             }
         } else {
-            let e: BinanceError = resp.json().await?;
-            throw!(e)
+            let resp_e = resp.error_for_status_ref().unwrap_err();
+            if let Ok(e) = resp.json::<BinanceError>().await {
+                throw!(e)
+            } else {
+                throw!(resp_e)
+            }
         }
     }
 }

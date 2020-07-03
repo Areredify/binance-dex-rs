@@ -209,7 +209,7 @@ pub struct ClosedOrders {
     pub side: Option<model::OrderSide>,
     pub status: Option<OrderStatus>,
     pub symbol: Option<String>,
-    pub total: Option<u32>,
+    pub total: Option<i32>,
 }
 
 impl Query for ClosedOrders {
@@ -226,7 +226,7 @@ pub struct OpenOrders {
     pub limit: Option<u32>,
     pub offset: Option<u32>,
     pub symbol: Option<String>,
-    pub total: Option<u32>,
+    pub total: Option<i32>,
 }
 
 impl Query for OpenOrders {
@@ -251,13 +251,97 @@ impl Query for Order {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct Trades {}
+/// *Description*: Gets 24 hour price change statistics for a market pair symbol. Updated every second.
+/// *Rate Limit*: 5 requests per IP per second.
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
+pub struct MarketTicker24hr {
+    pub symbol: Option<String>,
+}
+
+impl Query for MarketTicker24hr {
+    type Response = Vec<model::TickerStatistics>;
+
+    fn get_endpoint(&self) -> String {
+        "/api/v1/ticker/24hr".into()
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct Trades {
+    pub symbol: Option<String>,
+    pub address: Option<String>,
+    pub buyer_order_id: Option<String>,
+    #[serde(rename = "end")]
+    pub end_time: Option<u64>,
+    pub start_time: Option<u64>,
+    #[serde(rename = "height")]
+    pub block_height: Option<model::BlockHeight>,
+    pub limit: Option<u32>,  // default 500; max 1000
+    pub offset: Option<u32>, // default 0;
+    pub quote_asset: Option<String>,
+    pub seller_order_id: Option<String>,
+    pub side: Option<model::OrderSide>,
+    pub total: Option<i32>,
+}
 
 impl Query for Trades {
-    type Response = model::Candlestick;
+    type Response = model::TradePage;
 
     fn get_endpoint(&self) -> String {
         "/api/v1/trades".into()
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
+pub struct BlockExchangeFee {
+    pub address: String,
+    #[serde(rename = "start")]
+    pub start_time: Option<u64>,
+    #[serde(rename = "end")]
+    pub end_time: Option<u64>,
+    pub limit: Option<u32>,
+    pub offset: Option<u32>,
+    pub total: Option<i32>,
+}
+
+impl Query for BlockExchangeFee {
+    type Response = model::BlockExchangeFeePage;
+
+    fn get_endpoint(&self) -> String {
+        "/api/v1/block-exchange-fee".into()
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct AtomicSwaps {
+    pub start_time: Option<u64>,
+    pub end_time: Option<u64>,
+    pub from_address: Option<String>, // | at least one of from_adress and to_adress
+    pub to_address: Option<String>,   // | should be provided
+    pub limit: Option<u32>,
+    pub offset: Option<u32>,
+}
+
+impl Query for AtomicSwaps {
+    type Response = model::AtomicSwapPage;
+
+    fn get_endpoint(&self) -> String {
+        "/api/v1/atomic-swaps".into()
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
+pub struct AtomicSwap {
+    #[serde(skip)]
+    pub id: String,
+}
+
+impl Query for AtomicSwap {
+    type Response = model::AtomicSwap;
+
+    fn get_endpoint(&self) -> String {
+        format!("/api/v1/atomic-swaps/{}", self.id)
     }
 }
