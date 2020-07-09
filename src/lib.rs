@@ -3,8 +3,7 @@ mod client;
 mod model;
 
 pub use client::BinanceDexClient;
-pub use model::query;
-pub use model::query::Query;
+pub use model::{query, query::Query};
 
 #[cfg(test)]
 mod tests {

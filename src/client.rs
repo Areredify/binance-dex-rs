@@ -5,9 +5,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{from_str, to_string, to_value};
 use url::Url;
 
-use crate::api_url::HTTP_URL;
-use crate::model::Error as BinanceError;
-use crate::Query;
+use crate::{api_url::HTTP_URL, model::Error as BinanceError, Query};
 
 mod websocket;
 

@@ -1,6 +1,8 @@
 use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
-use std::fmt;
-use std::ops::{Add, Mul, Sub};
+use std::{
+    fmt,
+    ops::{Add, Mul, Sub},
+};
 
 // Fixed8 represents a fixed-point number with precision 10^-8
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
