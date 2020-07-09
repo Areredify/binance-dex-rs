@@ -259,7 +259,7 @@ pub struct MarketTicker24hr {
 }
 
 impl Query for MarketTicker24hr {
-    type Response = Vec<model::TickerStatistics>;
+    type Response = Vec<model::Ticker>;
 
     fn get_endpoint(&self) -> String {
         "/api/v1/ticker/24hr".into()
@@ -343,5 +343,20 @@ impl Query for AtomicSwap {
 
     fn get_endpoint(&self) -> String {
         format!("/api/v1/atomic-swaps/{}", self.id)
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct Timelocks {
+    #[serde(skip)]
+    address: String,
+    id: i64,
+}
+
+impl Query for Timelocks {
+    type Response = model::TimeLocks;
+
+    fn get_endpoint(&self) -> String {
+        format!("/api/v1/timelocks/{}", self.id)
     }
 }

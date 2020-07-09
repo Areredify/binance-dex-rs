@@ -17,6 +17,11 @@ failure = "0.1"
 fehler = "1"
 serde_json = "1"
 serde_repr = "0.1"
+tokio = "0.2"
+tokio-tungstenite = { version = "0.10", features = ["connect", "tls"] }
+futures = "0.3"
+pin-project = "0.4"
+streamunordered = "0.5"
 
 [dev-dependencies]
-tokio = "0.2"
+tokio = { version = "0.2", features = ["macros", "rt-threaded"] }

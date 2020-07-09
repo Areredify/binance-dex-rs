@@ -13,6 +13,7 @@ use std::fmt;
 
 pub mod fixed8;
 pub mod query;
+pub mod websocket;
 
 use fixed8::Fixed8;
 
@@ -36,6 +37,7 @@ impl std::error::Error for Error {}
 
 pub type BlockHeight = i64;
 pub type InlineFee = String;
+pub type PriceQty = (Fixed8, Fixed8);
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Times {
@@ -99,9 +101,9 @@ pub struct SyncInfo {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ProtocolVersion {
-    p2p: u64,
-    block: u64,
-    app: u64,
+    pub p2p: u64,
+    pub block: u64,
+    pub app: u64,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -204,8 +206,8 @@ pub enum Fee {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct MarketDepth {
-    pub asks: Vec<[Fixed8; 2]>, // price/qty pair
-    pub bids: Vec<[Fixed8; 2]>, // price/qty pair
+    pub asks: Vec<PriceQty>,
+    pub bids: Vec<PriceQty>,
 }
 
 pub type Candlestick = (
@@ -285,37 +287,37 @@ pub struct OrderList {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct TickerStatistics {
-    symbol: String,
-    quote_asset_name: String,
-    base_asset_name: String,
-    ask_price: Fixed8,
-    ask_quantity: Fixed8,
-    bid_price: Fixed8,
-    bid_quantity: Fixed8,
-    close_time: u64,
-    count: u64,
-    first_id: String,
-    high_price: Fixed8,
-    last_id: String,
-    last_price: Fixed8,
-    last_quantity: Fixed8,
-    low_price: Fixed8,
-    open_price: Fixed8,
-    open_time: u64,
-    prev_close_price: Fixed8,
-    price_change: Fixed8,
-    price_change_percent: String, // probably should parse into a f64? not sure
-    quote_volume: Fixed8,
-    volume: Fixed8,
-    weighted_avg_price: Fixed8,
+pub struct Ticker {
+    pub symbol: String,
+    pub quote_asset_name: String,
+    pub base_asset_name: String,
+    pub ask_price: Fixed8,
+    pub ask_quantity: Fixed8,
+    pub bid_price: Fixed8,
+    pub bid_quantity: Fixed8,
+    pub close_time: u64,
+    pub count: u64,
+    pub first_id: String,
+    pub high_price: Fixed8,
+    pub last_id: String,
+    pub last_price: Fixed8,
+    pub last_quantity: Fixed8,
+    pub low_price: Fixed8,
+    pub open_price: Fixed8,
+    pub open_time: u64,
+    pub prev_close_price: Fixed8,
+    pub price_change: Fixed8,
+    pub price_change_percent: String,
+    pub quote_volume: f64,
+    pub volume: f64,
+    pub weighted_avg_price: Fixed8,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TradePage {
-    total: i32,
+    pub total: i32,
     #[serde(rename = "trade")]
-    trades: Vec<Trade>,
+    pub trades: Vec<Trade>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
@@ -355,48 +357,74 @@ pub struct Trade {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BlockExchangeFeePage {
     #[serde(rename = "blockExchangeFee")]
-    block_exchange_fees: Vec<BlockExchangeFee>,
-    total: i32,
+    pub block_exchange_fees: Vec<BlockExchangeFee>,
+    pub total: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct BlockExchangeFee {
-    address: String,
-    block_height: BlockHeight,
-    block_time: u64,
-    fee: InlineFee,
-    trade_count: u64,
+    pub address: String,
+    pub block_height: BlockHeight,
+    pub block_time: u64,
+    pub fee: InlineFee,
+    pub trade_count: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct AtomicSwapPage {
-    atomic_swaps: Vec<AtomicSwap>,
-    total: i32,
+    pub atomic_swaps: Vec<AtomicSwap>,
+    pub total: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct AtomicSwap {
-    block_timestamp: u64,
-    closed_time: Option<u64>,
-    cross_chain: i64,
-    expected_income: String,
-    expire_height: i64,
-    from_addr: String,
-    to_addr: String,
-    in_amount: Option<String>,
-    out_amount: Option<String>,
-    random_number: Option<String>,
-    random_number_hash: String,
-    recipient_other_chain: String,
-    status: i64,
-    swap_id: String,
-    timestamp: u64, // MEASURED IN SECONDS
+    pub block_timestamp: u64,
+    pub closed_time: Option<u64>,
+    pub cross_chain: i64,
+    pub expected_income: String,
+    pub expire_height: i64,
+    pub from_addr: String,
+    pub to_addr: String,
+    pub in_amount: Option<String>,
+    pub out_amount: Option<String>,
+    pub random_number: Option<String>,
+    pub random_number_hash: String,
+    pub recipient_other_chain: String,
+    pub status: i64,
+    pub swap_id: String,
+    pub timestamp: u64, // MEASURED IN SECONDS
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct LockedCoin {
+    pub symbol: String,
+    pub amount: Fixed8,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TimeLocks {
+    pub id: i64,
+    pub description: String,
+    pub amount: Vec<LockedCoin>,
+    pub locktime: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct MiniTokens {
+    pub name: String,
+    pub symbol: String,
+    pub original_symbol: String,
+    pub total_supply: Fixed8,
+    pub token_type: i64,
+    pub owner: String,
+    pub mintable: bool,
+    pub token_uri: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Dummy {
-    _id: String,
+    pub _id: String,
 }

@@ -2,7 +2,7 @@ mod api_url;
 mod client;
 mod model;
 
-pub use client::BitChainClient;
+pub use client::BinanceDexClient;
 pub use model::query;
 pub use model::query::Query;
 
@@ -14,7 +14,7 @@ mod tests {
     where
         Q::Response: std::fmt::Debug,
     {
-        let client = BitChainClient::new();
+        let client = BinanceDexClient::new();
         let mut rt = tokio::runtime::Runtime::new()?;
         let response = rt.block_on(client.query(q))?;
         dbg!(&response);
