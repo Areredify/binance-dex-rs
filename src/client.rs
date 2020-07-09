@@ -5,15 +5,17 @@ use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{from_str, to_string, to_value};
 use url::Url;
 
-use crate::api_url::BASE_URL;
+use crate::api_url::HTTP_URL;
 use crate::model::Error as BinanceError;
 use crate::Query;
 
-pub struct BitChainClient {
+mod websocket;
+
+pub struct BinanceDexClient {
     client: Client,
 }
 
-impl BitChainClient {
+impl BinanceDexClient {
     pub fn new() -> Self {
         Self {
             client: Client::new(),
@@ -22,7 +24,7 @@ impl BitChainClient {
 
     #[throws(failure::Error)]
     pub async fn query<Q: Query>(&self, request: Q) -> Q::Response {
-        let url = format!("{}{}", *BASE_URL, request.get_endpoint());
+        let url = format!("{}{}", *HTTP_URL, request.get_endpoint());
         let url = Url::parse_with_params(&url, request.to_url_query())?;
 
         let req = self
