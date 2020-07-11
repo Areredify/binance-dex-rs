@@ -5,9 +5,9 @@ use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{from_str, to_string, to_value};
 use url::Url;
 
-use crate::{api_url::HTTP_URL, model::Error as BinanceError, Query};
+use crate::{api_url::HTTP_URL, model::Error as BinanceError, query::Query};
 
-mod websocket;
+pub mod websocket;
 
 pub struct BinanceDexClient {
     client: Client,

@@ -1,13 +1,17 @@
 mod api_url;
 mod client;
-mod model;
+pub mod model;
 
-pub use client::BinanceDexClient;
-pub use model::{query, query::Query};
+pub use client::{websocket::BinanceDexWebsocket, BinanceDexClient};
+pub use model::{
+    query,
+    websocket::{Message as BinanceDexWsMessage, SubscriptionToken, Topic},
+};
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::query::Query;
 
     fn test_query<Q: Query>(q: Q) -> Fallible<Q::Response>
     where
@@ -108,7 +112,7 @@ mod tests {
     fn candlestick() -> Fallible<()> {
         test_query(query::Candlestick {
             symbol: "CLIS-EFE_BNB".into(),
-            interval: query::Intervals::T1d,
+            interval: model::Intervals::T1d,
             limit: None,
             start_time: None,
             end_time: None,

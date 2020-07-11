@@ -25,3 +25,4 @@ streamunordered = "0.5"
 
 [dev-dependencies]
 tokio = { version = "0.2", features = ["macros", "rt-threaded"] }
+env_logger = "0.7"

@@ -133,43 +133,9 @@ impl Query for MarketDepth {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub enum Intervals {
-    #[serde(rename = "1m")]
-    T1m,
-    #[serde(rename = "3m")]
-    T3m,
-    #[serde(rename = "5m")]
-    T5m,
-    #[serde(rename = "15m")]
-    T15m,
-    #[serde(rename = "30m")]
-    T30m,
-    #[serde(rename = "1h")]
-    T1h,
-    #[serde(rename = "2h")]
-    T2h,
-    #[serde(rename = "4h")]
-    T4h,
-    #[serde(rename = "6h")]
-    T6h,
-    #[serde(rename = "8h")]
-    T8h,
-    #[serde(rename = "12h")]
-    T12h,
-    #[serde(rename = "1d")]
-    T1d,
-    #[serde(rename = "3d")]
-    T3d,
-    #[serde(rename = "1w")]
-    T1w,
-    #[serde(rename = "1M")]
-    T1M,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Candlestick {
     pub symbol: String,
-    pub interval: Intervals,
+    pub interval: model::Intervals,
     pub limit: Option<u32>, // default 300; max 1000.
     #[serde(rename = "startTime")]
     pub start_time: Option<u64>, // start time in milliseconds

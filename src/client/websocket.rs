@@ -1,16 +1,16 @@
 use std::collections::HashMap;
 
 use failure::Fallible;
-use fehler::{throw, throws};
+use fehler::throws;
 use futures::{
-    sink::Sink,
-    stream::{SplitStream, Stream, StreamExt},
+    sink::SinkExt,
+    stream::Stream,
     task::{Context, Poll},
 };
-use log::trace;
+use log::debug;
 use pin_project::pin_project;
-use serde::Serialize;
-use serde_json::{from_str, json, to_string};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde_json::from_str;
 use std::pin::Pin;
 use streamunordered::{StreamUnordered, StreamYield};
 use tokio::net::TcpStream;
@@ -44,8 +44,9 @@ pub struct BinanceDexWebsocket {
 }
 
 #[derive(Serialize)]
-pub struct Message<'a, T> {
+struct SubscribeMessage<'a, T> {
     method: &'a str,
+    topic: &'a str,
     #[serde(flatten)]
     payload: T,
 }
@@ -59,12 +60,10 @@ impl BinanceDexWebsocket {
         let mut this = self.project();
 
         let (mut stream, _) = connect_async(Url::parse(&WS_URL).unwrap()).await?;
+        let subscribe_message = topic.to_subscribe_message();
+        debug!("{}", subscribe_message);
 
-        let message = Message {
-            method: "subscribe",
-            payload: &topic,
-        };
-        Pin::new(&mut stream).start_send(WSMessage::Text(serde_json::to_string(&message)?))?;
+        stream.send(WSMessage::Text(subscribe_message)).await?;
 
         let token = this.streams.push(stream);
         this.tokens.insert(topic.clone(), token);
@@ -90,7 +89,7 @@ impl Stream for BinanceDexWebsocket {
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
         let this = self.project();
         let poll = this.streams.poll_next(cx);
-        match poll { 
+        match poll {
             Poll::Ready(Some((y, token))) => match y {
                 StreamYield::Item(item) => {
                     let topic = this.topics.get(&token).unwrap();
@@ -109,22 +108,45 @@ impl Stream for BinanceDexWebsocket {
     }
 }
 
-#[throws(failure::Error)]
-fn parse_message(msg: WSMessage, topic: &Topic) -> BinanceDexWsMessage {
-    match msg {
-        WSMessage::Text(message) => {
-            let message = message.as_str();
-            println!("received text message: {}", message);
-            match from_str(message) {
-                Ok(r) => r,
-                Err(_) => BinanceDexWsMessage::Unknown,
-            }
+#[derive(Deserialize)]
+#[allow(dead_code)]
+struct Payload<T> {
+    stream: String,
+    data: T,
+}
+
+fn get_data<T: DeserializeOwned>(msg: &str) -> Fallible<T> {
+    let payload: Payload<T> = from_str(msg)?;
+    Ok(payload.data)
+}
+
+fn parse_message(msg: WSMessage, topic: &Topic) -> Fallible<BinanceDexWsMessage> {
+    let msg = match msg {
+        WSMessage::Text(msg) => msg,
+        WSMessage::Binary(b) => return Ok(BinanceDexWsMessage::Binary(b)),
+        WSMessage::Pong(..) => return Ok(BinanceDexWsMessage::Pong),
+        WSMessage::Ping(..) => return Ok(BinanceDexWsMessage::Ping),
+        WSMessage::Close(..) => {
+            return Err(failure::format_err!("Socket with topic {:?} closed", topic))
         }
-        WSMessage::Close(_) => throw!(failure::Error::from_boxed_compat("websocket closed".into())),
-        WSMessage::Binary(c) => throw!(failure::Error::from_boxed_compat(
-            "unexpected binary content".into()
-        )),
-        WSMessage::Ping(_) => BinanceDexWsMessage::Ping,
-        WSMessage::Pong(_) => BinanceDexWsMessage::Pong,
-    }
+    };
+
+    debug!("Incoming websocket message {}", msg);
+
+    let message = match topic {
+        Topic::Accounts { .. } => BinanceDexWsMessage::Accounts(get_data(&msg)?),
+        Topic::Orders { .. } => BinanceDexWsMessage::Orders(get_data(&msg)?),
+        Topic::Transfers { .. } => BinanceDexWsMessage::Transfers(get_data(&msg)?),
+        Topic::MarketDiff { .. } => BinanceDexWsMessage::MarketDiff(get_data(&msg)?),
+        Topic::Trades { .. } => BinanceDexWsMessage::Trades(get_data(&msg)?),
+        Topic::MarketDepth { .. } => BinanceDexWsMessage::MarketDepth(get_data(&msg)?),
+        Topic::Candlestick { .. } => BinanceDexWsMessage::Candlestick(get_data(&msg)?),
+        Topic::Ticker { .. } => BinanceDexWsMessage::Ticker(get_data(&msg)?),
+        Topic::AllTickers { .. } => BinanceDexWsMessage::AllTickers(get_data(&msg)?),
+        Topic::MiniTicker { .. } => BinanceDexWsMessage::MiniTicker(get_data(&msg)?),
+        Topic::AllMiniTickers { .. } => BinanceDexWsMessage::AllMiniTickers(get_data(&msg)?),
+        Topic::Blockheight { .. } => BinanceDexWsMessage::Blockheight(get_data(&msg)?),
+    };
+
+    Ok(message)
 }

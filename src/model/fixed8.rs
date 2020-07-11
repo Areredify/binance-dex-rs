@@ -5,7 +5,7 @@ use std::{
 };
 
 // Fixed8 represents a fixed-point number with precision 10^-8
-#[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct Fixed8(pub i64);
 
 pub const FIXED8_DECIMALS: i64 = 100_000_000; // 10^8
@@ -13,6 +13,17 @@ pub const FIXED8_DECIMALS: i64 = 100_000_000; // 10^8
 impl Fixed8 {
     pub fn decimal(self) -> i64 {
         self.0 / FIXED8_DECIMALS
+    }
+}
+
+impl fmt::Debug for Fixed8 {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}.{}",
+            self.0 / FIXED8_DECIMALS,
+            self.0 % FIXED8_DECIMALS
+        )
     }
 }
 
