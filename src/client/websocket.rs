@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use failure::Fallible;
-use fehler::throws;
 use futures::{
     sink::SinkExt,
     stream::Stream,
@@ -22,17 +21,9 @@ use url::Url;
 use crate::{
     api_url::WS_URL,
     model::websocket::{Message as BinanceDexWsMessage, SubscriptionToken, Topic},
-    BinanceDexClient,
 };
 
 type WSStream = WebSocketStream<MaybeTlsStream<TcpStream>>;
-
-impl BinanceDexClient {
-    #[throws(failure::Error)]
-    pub async fn websocket(&self) -> BinanceDexWebsocket {
-        BinanceDexWebsocket::new()
-    }
-}
 
 #[pin_project]
 #[derive(Default)]

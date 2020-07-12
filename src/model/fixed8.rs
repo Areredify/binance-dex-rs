@@ -81,13 +81,13 @@ impl<'de> Visitor<'de> for Fixed8Visitor {
     where
         E: serde::de::Error,
     {
-        let (v, sign): (&str, i64) = if v.starts_with("-") {
+        let (v, sign): (&str, i64) = if v.starts_with('-') {
             (&v[1..], -1)
         } else {
             (v, 1)
         };
 
-        let mut parts = v.split(".");
+        let mut parts = v.split('.');
 
         // Unwrap is safe here bc split always produces at least one value
         let decimals: i64 = parts

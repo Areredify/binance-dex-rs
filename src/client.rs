@@ -1,4 +1,4 @@
-use fehler::{throw, throws};
+use failure::Fallible;
 use log::error;
 use reqwest::{Client, Method, Response};
 use serde::{de::DeserializeOwned, Serialize};
@@ -9,19 +9,17 @@ use crate::{api_url::HTTP_URL, model::Error as BinanceError, query::Query};
 
 pub mod websocket;
 
+#[derive(Default)]
 pub struct BinanceDexClient {
     client: Client,
 }
 
 impl BinanceDexClient {
     pub fn new() -> Self {
-        Self {
-            client: Client::new(),
-        }
+        Default::default()
     }
 
-    #[throws(failure::Error)]
-    pub async fn query<Q: Query>(&self, request: Q) -> Q::Response {
+    pub async fn query<Q: Query>(&self, request: Q) -> Fallible<Q::Response> {
         let url = format!("{}{}", *HTTP_URL, request.get_endpoint());
         let url = Url::parse_with_params(&url, request.to_url_query())?;
 
@@ -30,27 +28,25 @@ impl BinanceDexClient {
             .request(Method::GET, url.as_str())
             .header("user-agent", "binance-dex-rs");
 
-        self.handle_response(req.send().await?).await?
+        self.handle_response(req.send().await?).await
     }
 
-    #[throws(failure::Error)]
-    async fn handle_response<T: DeserializeOwned>(&self, resp: Response) -> T {
+    async fn handle_response<T: DeserializeOwned>(&self, resp: Response) -> Fallible<T> {
         if resp.status().is_success() {
             let resp = resp.text().await?;
             match from_str::<T>(&resp) {
-                Ok(resp) => resp,
+                Ok(resp) => Ok(resp),
                 Err(e) => {
                     error!("Cannot deserialize '{}'", resp);
-                    println!("{}, {}", resp, &e);
-                    throw!(e);
+                    Err(e.into())
                 }
             }
         } else {
             let resp_e = resp.error_for_status_ref().unwrap_err();
             if let Ok(e) = resp.json::<BinanceError>().await {
-                throw!(e)
+                Err(e.into())
             } else {
-                throw!(resp_e)
+                Err(resp_e.into())
             }
         }
     }

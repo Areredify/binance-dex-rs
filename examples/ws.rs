@@ -1,4 +1,4 @@
-use binance_dex_rs::{BinanceDexClient, Topic};
+use binance_dex_rs::{BinanceDexWebsocket, Topic};
 use failure::Fallible;
 use futures::stream::StreamExt;
 use std::pin::Pin;
@@ -11,8 +11,7 @@ async fn main() -> Fallible<()> {
     // good order address bnb1w7puzjxu05ktc5zvpnzkndt6tyl720nsutzvpg
     // good transaction address bnb1dn3mhh2gl7vk38w6ppncrvzwzhccvvje49ymkk
 
-    let client = BinanceDexClient::new();
-    let mut websocket = client.websocket().await?;
+    let mut websocket = BinanceDexWebsocket::new();
 
     Pin::new(&mut websocket)
         .subscribe(Topic::Transfers {
