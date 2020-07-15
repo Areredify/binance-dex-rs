@@ -19,4 +19,11 @@ lazy_static! {
             "wss://testnet-dex.binance.org/api/ws"
         }
     };
+    pub static ref NET_PREFIX: &'static str = {
+        if var("BINANCE_DEX_TESTNET").unwrap_or_else(|_| "0".to_string()) == "0" {
+            "bnb"
+        } else {
+            "tbnb"
+        }
+    };
 }

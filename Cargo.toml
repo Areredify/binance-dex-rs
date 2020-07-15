@@ -21,6 +21,11 @@ tokio-tungstenite = { version = "0.10", features = ["connect", "tls"] }
 futures = "0.3"
 pin-project = "0.4"
 streamunordered = "0.5"
+secp256k1 = "0.17"
+hex = "0.4"
+sha2 = "0.9"
+ripemd160 = "0.9"
+bech32 = "0.7"
 
 [dev-dependencies]
 tokio = { version = "0.2", features = ["macros", "rt-threaded"] }

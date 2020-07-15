@@ -1,5 +1,6 @@
 mod api_url;
 mod client;
+pub mod key_manager;
 pub mod model;
 
 pub use client::{websocket::BinanceDexWebsocket, BinanceDexClient};
