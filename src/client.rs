@@ -5,7 +5,11 @@ use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{from_str, to_string, to_value};
 use url::Url;
 
-use crate::{api_url::HTTP_URL, model::Error as BinanceError, query::Query};
+use crate::{
+    api_url::HTTP_URL,
+    model::{transaction, Error as BinanceError},
+    query::Query,
+};
 
 pub mod websocket;
 
@@ -50,6 +54,10 @@ impl BinanceDexClient {
             }
         }
     }
+
+    async fn broadcast(msg: transaction::Msg) -> Fallible<()> {
+        Ok(())
+    }
 }
 
 trait ToUrlQuery: Serialize {
@@ -77,3 +85,196 @@ trait ToUrlQuery: Serialize {
 }
 
 impl<S: Serialize> ToUrlQuery for S {}
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        key_manager::KeyManager,
+        model::{transaction::*, *},
+    };
+    use failure::Fallible;
+    use prost_amino::Message;
+
+    fn encode_msg(
+        km: &KeyManager,
+        mut msg: Msg,
+        account_number: i64,
+        sequence: i64,
+    ) -> Fallible<String> {
+        msg.preprocess();
+
+        let sign = StdSignMsg {
+            chain_id: "bnbchain-1000".into(),
+            account_number,
+            sequence,
+            memo: String::new(),
+            msgs: vec![msg.clone()],
+            source: 0,
+            data: None,
+        };
+
+        let sign = km.sign(&sign)?;
+        println!("{}", hex::encode(&sign));
+        let sign = StdSignature {
+            pub_key: km.public_key.clone(),
+            signature: sign,
+            account_number,
+            sequence,
+        };
+
+        let tx = StdTx {
+            msgs: vec![msg],
+            signatures: vec![sign],
+            memo: String::new(),
+            source: 0,
+            data: vec![],
+        };
+
+        let mut x = vec![];
+        tx.encode_length_delimited(&mut x)?;
+        Ok(hex::encode(&x))
+    }
+
+    #[test]
+    fn transactions() -> Fallible<()> {
+        let km1 = KeyManager::from_private_key(
+            "01a8d11703efbd8cd8653174216efd9b7901e081db96215b949739727b9047ba",
+        )?;
+        let km2 = KeyManager::from_private_key(
+            "5cc80a4fee8b51afbbe71f2ae079c682f474b6f67e116b0e6c230506a6a695aa",
+        )?;
+
+        let msg = Msg::CancelOrder(CancelOrder {
+            symbol: "BTC-86A_BNB".into(),
+            sender: km1.account_address.clone(),
+            refid: "1D0E3086E8E4E0A53C38A90D55BD58B34D57D2FA-5".into(),
+        });
+        assert_eq!(
+            encode_msg(&km1, msg, 0, 5)?,
+            "c701f0625dee0a53166e681b0a141d0e3086e8e4e0a53c38a90d55bd58b34d57d2fa120b4254432d383\
+             6415f424e421a2a31443045333038364538453445304135334333384139304435354244353842333444\
+             3537443246412d35126c0a26eb5ae98721027e69d96640300433654e016d218a8d7ffed751023d8efe8\
+             1e55dedbd6754c9711240fe2fd18630317849bd1d4ae064f8c4fd95f6186bdb61e2b73a5fb5e93ac779\
+             4d4a990ba943694659df9d3f49d5312fec020b80148677f3e95fd6d88486bba19d2005"
+        );
+
+        let msg = Msg::CreateOrder(CreateOrder {
+            sender: km1.account_address.clone(),
+            id: "1D0E3086E8E4E0A53C38A90D55BD58B34D57D2FA-5".into(),
+            side: OrderSide::Buy as i64,
+            symbol: "BTC-86A_BNB".into(),
+            price: 100000000,
+            quantity: 1000000000,
+            ordertype: OrderType::Limit as i64,
+            timeinforce: OrderDuration::GoodTillExpire as i64,
+        });
+
+        assert_eq!(
+            encode_msg(&km1, msg, 0, 4)?,
+            "d801f0625dee0a64ce6dc0430a141d0e3086e8e4e0a53c38a90d55bd58b34d57d2fa122a31443045333\
+             0383645384534453041353343333841393044353542443538423334443537443246412d351a0b425443\
+             2d3836415f424e42200228013080c2d72f388094ebdc034001126c0a26eb5ae98721027e69d96640300\
+             433654e016d218a8d7ffed751023d8efe81e55dedbd6754c97112409fe317e036f2bdc8c87a0138dc52\
+             367faef80ea1d6e21a35634b17a82ed7be632c9cb03f865f6f8a6872736ccab716a157f3cb99339afa5\
+             5686aa455dc134f6a2004"
+        );
+
+        let msg = Msg::Transfer(Transfer {
+            inputs: vec![TransferIO {
+                address: km1.account_address.clone(),
+                coins: vec![Coin {
+                    denom: "BNB".into(),
+                    amount: 100000000000000,
+                }],
+            }],
+            outputs: vec![TransferIO {
+                address: km2.account_address.clone(),
+                coins: vec![Coin {
+                    denom: "BNB".into(),
+                    amount: 100000000000000,
+                }],
+            }],
+        });
+
+        assert_eq!(
+            encode_msg(&km1, msg, 0, 1)?,
+            "c601f0625dee0a522a2c87fa0a250a141d0e3086e8e4e0a53c38a90d55bd58b34d57d2fa120d0a03424\
+             e42108080e983b1de1612250a146b571fc0a9961a7ddf45e49a88a4d83941fcabbe120d0a03424e4210\
+             8080e983b1de16126c0a26eb5ae98721027e69d96640300433654e016d218a8d7ffed751023d8efe81e\
+             55dedbd6754c97112408b23eecfa8237a27676725173e58154e6c204bb291b31c3b7b507c8f04e27739\
+             09ba70e01b54f4bd0bc76669f5712a5a66b9508acdf3aa5e4fde75fbe57622a12001"
+        );
+
+        let transfer_result = "e401f0625dee0a6e2a2c87fa0a330a141d0e3086e8e4e0a53c38a90d55b\
+            d58b34d57d2fa120d0a03424e42108080e983b1de16120c0a034254431080a094a58d1d12330a146b571\
+            fc0a9961a7ddf45e49a88a4d83941fcabbe120d0a03424e42108080e983b1de16120c0a034254431080a\
+            094a58d1d126e0a26eb5ae98721027e69d96640300433654e016d218a8d7ffed751023d8efe81e55dedb\
+            d6754c97112407516bf5ac3b4bf7a9037a4ca33c5eaa250392d8c4c13489985de079626f7daec488513c\
+            5315ae25549aa612142aa9f41979f7b7fed4ae93c01449dabf1b0ef5218022003";
+
+        let msg = Msg::Transfer(Transfer {
+            inputs: vec![TransferIO {
+                address: km1.account_address.clone(),
+                coins: vec![
+                    Coin {
+                        denom: "BNB".into(),
+                        amount: 100000000000000,
+                    },
+                    Coin {
+                        denom: "BTC".into(),
+                        amount: 1000000000000,
+                    },
+                ],
+            }],
+            outputs: vec![TransferIO {
+                address: km2.account_address.clone(),
+                coins: vec![
+                    Coin {
+                        denom: "BTC".into(),
+                        amount: 1000000000000,
+                    },
+                    Coin {
+                        denom: "BNB".into(),
+                        amount: 100000000000000,
+                    },
+                ],
+            }],
+        });
+
+        assert_eq!(encode_msg(&km1, msg, 2, 3)?, transfer_result);
+
+        // swapped order of coins
+        let msg = Msg::Transfer(Transfer {
+            inputs: vec![TransferIO {
+                address: km1.account_address.clone(),
+                coins: vec![
+                    Coin {
+                        denom: "BTC".into(),
+                        amount: 1000000000000,
+                    },
+                    Coin {
+                        denom: "BNB".into(),
+                        amount: 100000000000000,
+                    },
+                ],
+            }],
+            outputs: vec![TransferIO {
+                address: km2.account_address.clone(),
+                coins: vec![
+                    Coin {
+                        denom: "BNB".into(),
+                        amount: 100000000000000,
+                    },
+                    Coin {
+                        denom: "BTC".into(),
+                        amount: 1000000000000,
+                    },
+                ],
+            }],
+        });
+
+        assert_eq!(encode_msg(&km1, msg, 2, 3)?, transfer_result);
+
+        Ok(())
+    }
+}

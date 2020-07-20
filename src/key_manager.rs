@@ -68,3 +68,31 @@ impl KeyManager {
             .to_vec())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn from_private_key() -> Fallible<()> {
+        let km1 = KeyManager::from_private_key(
+            "01a8d11703efbd8cd8653174216efd9b7901e081db96215b949739727b9047ba",
+        )?;
+
+        assert_eq!(
+            km1.account_address_str,
+            "bnb1r58rpphguns220pc4yx4t02ckdx405h6a3qyu9"
+        );
+
+        let km2 = KeyManager::from_private_key(
+            "5cc80a4fee8b51afbbe71f2ae079c682f474b6f67e116b0e6c230506a6a695aa",
+        )?;
+
+        assert_eq!(
+            km2.account_address_str,
+            "bnb1ddt3ls9fjcd8mh69ujdg3fxc89qle2a7km33aa"
+        );
+
+        Ok(())
+    }
+}

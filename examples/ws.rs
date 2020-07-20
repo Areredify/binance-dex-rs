@@ -23,52 +23,51 @@ async fn main() -> Fallible<()> {
         //     address: "bnb1dn3mhh2gl7vk38w6ppncrvzwzhccvvje49ymkk".into(),
         // })
         // .await?;
-
         // Trades
-        .subscribe(Topic::Trades{
+        .subscribe(Topic::Trades {
             symbols: vec![rune, ava, cbm],
         })
         .await?;
 
-        // MarketDepth
-        // .subscribe(Topic::MarketDepth{
-        //     amount: None,
-        //     symbols: vec![rune, ava, cbm],
-        // })
-        // .await?;
+    // MarketDepth
+    // .subscribe(Topic::MarketDepth{
+    //     amount: None,
+    //     symbols: vec![rune, ava, cbm],
+    // })
+    // .await?;
 
-        // Candlestick
-        // .subscribe(Topic::Candlestick{
-        //     interval: Intervals::T1h,
-        //     symbols: vec![rune, ava, cbm],
-        // })
-        // .await?;
+    // Candlestick
+    // .subscribe(Topic::Candlestick{
+    //     interval: Intervals::T1h,
+    //     symbols: vec![rune, ava, cbm],
+    // })
+    // .await?;
 
-        // Ticker
-        // .subscribe(Topic::Ticker{
-        //     symbols: vec![rune, ava, cbm],
-        // })
+    // Ticker
+    // .subscribe(Topic::Ticker{
+    //     symbols: vec![rune, ava, cbm],
+    // })
 
-        // .await?;
-        // AllTickers
-        // .subscribe(Topic::AllTickers{
-        // })
-        // .await?;
+    // .await?;
+    // AllTickers
+    // .subscribe(Topic::AllTickers{
+    // })
+    // .await?;
 
-        // MinTicker
-        // .subscribe(Topic::MiniTicker {
-        //     symbols: vec![rune, ava, cbm],
-        // })
-        // .await?;
+    // MinTicker
+    // .subscribe(Topic::MiniTicker {
+    //     symbols: vec![rune, ava, cbm],
+    // })
+    // .await?;
 
-        // AllMiniTickers
-        // .subscribe(Topic::AllMiniTickers {
-        // })
-        // .await?;
+    // AllMiniTickers
+    // .subscribe(Topic::AllMiniTickers {
+    // })
+    // .await?;
 
-        // BlockHeight
-        // .subscribe(Topic::BlockHeight)
-        // .await?;
+    // BlockHeight
+    // .subscribe(Topic::BlockHeight)
+    // .await?;
 
     while let Some(msg) = websocket.next().await {
         println!("{:#?}", msg);

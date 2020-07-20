@@ -26,6 +26,8 @@ hex = "0.4"
 sha2 = "0.9"
 ripemd160 = "0.9"
 bech32 = "0.7"
+prost-amino = { git = "https://github.com/Areredify/amino_rs.git" }
+prost-amino-derive = { git = "https://github.com/Areredify/amino_rs.git" }
 
 [dev-dependencies]
 tokio = { version = "0.2", features = ["macros", "rt-threaded"] }

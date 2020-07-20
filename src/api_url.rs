@@ -26,4 +26,11 @@ lazy_static! {
             "tbnb"
         }
     };
+    pub static ref CHAIN_ID: &'static str = {
+        if var("BINANCE_DEX_TESTNET").unwrap_or_else(|_| "0".to_string()) == "0" {
+            "Binance-Chain-Tigris"
+        } else {
+            "Binance-Chain-Nile"
+        }
+    };
 }

@@ -6,13 +6,15 @@
 // matches default representation for serde, so no custom logic is required
 // when de-/serializing DateTime.
 
+use std::fmt;
+
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use std::fmt;
 
 pub mod fixed8;
 pub mod query;
+pub mod transaction;
 pub mod websocket;
 
 use fixed8::Fixed8;
