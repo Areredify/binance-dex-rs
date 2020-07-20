@@ -128,7 +128,7 @@ fn parse_message(msg: WSMessage, topic: &Topic) -> Fallible<BinanceDexWsMessage>
         Topic::AllTickers { .. } => BinanceDexWsMessage::AllTickers(get_data(&msg)?),
         Topic::MiniTicker { .. } => BinanceDexWsMessage::MiniTicker(get_data(&msg)?),
         Topic::AllMiniTickers { .. } => BinanceDexWsMessage::AllMiniTickers(get_data(&msg)?),
-        Topic::BlockHeight { .. } => BinanceDexWsMessage::Blockheight(get_data(&msg)?),
+        Topic::BlockHeight { .. } => BinanceDexWsMessage::BlockHeight(get_data(&msg)?),
     };
 
     Ok(message)

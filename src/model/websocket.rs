@@ -116,7 +116,7 @@ pub enum Message {
     AllTickers(Vec<Ticker>),
     MiniTicker(MiniTicker),
     AllMiniTickers(Vec<MiniTicker>),
-    Blockheight(Blockheight),
+    BlockHeight(Blockheight),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
