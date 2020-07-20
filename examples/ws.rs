@@ -66,8 +66,8 @@ async fn main() -> Fallible<()> {
         // })
         // .await?;
 
-        // Blockheight
-        // .subscribe(Topic::Blockheight)
+        // BlockHeight
+        // .subscribe(Topic::BlockHeight)
         // .await?;
 
     while let Some(msg) = websocket.next().await {

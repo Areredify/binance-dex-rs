@@ -8,7 +8,7 @@ use futures::{
 };
 use log::debug;
 use pin_project::pin_project;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize};
 use serde_json::from_str;
 use std::pin::Pin;
 use streamunordered::{StreamUnordered, StreamYield};
@@ -32,14 +32,6 @@ pub struct BinanceDexWebsocket {
     streams: StreamUnordered<WSStream>,
     tokens: HashMap<Topic, usize>,
     topics: HashMap<usize, Topic>,
-}
-
-#[derive(Serialize)]
-struct SubscribeMessage<'a, T> {
-    method: &'a str,
-    topic: &'a str,
-    #[serde(flatten)]
-    payload: T,
 }
 
 impl BinanceDexWebsocket {
@@ -136,7 +128,7 @@ fn parse_message(msg: WSMessage, topic: &Topic) -> Fallible<BinanceDexWsMessage>
         Topic::AllTickers { .. } => BinanceDexWsMessage::AllTickers(get_data(&msg)?),
         Topic::MiniTicker { .. } => BinanceDexWsMessage::MiniTicker(get_data(&msg)?),
         Topic::AllMiniTickers { .. } => BinanceDexWsMessage::AllMiniTickers(get_data(&msg)?),
-        Topic::Blockheight { .. } => BinanceDexWsMessage::Blockheight(get_data(&msg)?),
+        Topic::BlockHeight { .. } => BinanceDexWsMessage::Blockheight(get_data(&msg)?),
     };
 
     Ok(message)

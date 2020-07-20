@@ -47,7 +47,7 @@ pub enum Topic {
         symbols: Vec<String>,
     },
     AllMiniTickers,
-    Blockheight,
+    BlockHeight,
 }
 
 impl Topic {
@@ -77,7 +77,7 @@ impl Topic {
             Self::AllTickers => "allTickers".into(),
             Self::MiniTicker { .. } => "miniTicker".into(),
             Self::AllMiniTickers => "allMiniTickers".into(),
-            Self::Blockheight => "blockheight".into(),
+            Self::BlockHeight => "blockheight".into(),
         };
 
         let value = match self {
@@ -92,7 +92,7 @@ impl Topic {
             | Self::MiniTicker { symbols } => {
                 json!({"method": "subscribe", "topic": topic, "symbols": symbols})
             }
-            Self::AllTickers | Self::AllMiniTickers | Self::Blockheight => {
+            Self::AllTickers | Self::AllMiniTickers | Self::BlockHeight => {
                 json!({"method": "subscribe", "topic": topic, "symbols": ["$all"]})
             }
         };
