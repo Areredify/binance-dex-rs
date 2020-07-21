@@ -1,5 +1,5 @@
 use failure::Fallible;
-use log::error;
+use log::{error, debug};
 use prost_amino::Message;
 use reqwest::{Client, Method, Response};
 use serde::{de::DeserializeOwned, Serialize};
@@ -100,6 +100,8 @@ impl BinanceDexClient {
             .header("user-agent", "binance-dex-rs")
             .header("content-type", "text/plain")
             .body(body.into_bytes());
+        
+        debug!("{:?}", &req);
 
         let resp: Vec<TxCommitResult> = self.handle_response(req.send().await?).await?;
 
