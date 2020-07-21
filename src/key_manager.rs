@@ -1,6 +1,6 @@
 use std::io::Write;
 
-use bech32::ToBase32;
+use bech32::{FromBase32, ToBase32};
 use failure::Fallible;
 use hex;
 use ripemd160::Ripemd160;
@@ -35,6 +35,10 @@ fn get_address(public_key: &[u8]) -> Fallible<Vec<u8>> {
 
 pub fn address_to_str(address: &[u8]) -> Fallible<String> {
     Ok(bech32::encode(*NET_PREFIX, address.to_base32())?)
+}
+
+pub fn str_to_address(s: &str) -> Fallible<Vec<u8>> {
+    Ok(<Vec<u8> as FromBase32>::from_base32(&bech32::decode(s)?.1)?)
 }
 
 impl KeyManager {

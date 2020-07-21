@@ -1,11 +1,11 @@
 use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 use std::{
     fmt,
-    ops::{Add, Mul, Sub},
+    ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign},
 };
 
 // Fixed8 represents a fixed-point number with precision 10^-8
-#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Default)]
 pub struct Fixed8(pub i64);
 
 pub const FIXED8_DECIMALS: i64 = 100_000_000; // 10^8
@@ -35,6 +35,12 @@ impl Add for Fixed8 {
     }
 }
 
+impl AddAssign for Fixed8 {
+    fn add_assign(&mut self, rhs: Self) {
+        self.0 += rhs.0
+    }
+}
+
 impl Sub for Fixed8 {
     type Output = Fixed8;
 
@@ -43,11 +49,23 @@ impl Sub for Fixed8 {
     }
 }
 
+impl SubAssign for Fixed8 {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.0 -= rhs.0
+    }
+}
+
 impl Mul<i64> for Fixed8 {
     type Output = Fixed8;
 
     fn mul(self, rhs: i64) -> Self::Output {
         Fixed8(self.0 * rhs)
+    }
+}
+
+impl MulAssign for Fixed8 {
+    fn mul_assign(&mut self, rhs: Self) {
+        self.0 *= rhs.0
     }
 }
 

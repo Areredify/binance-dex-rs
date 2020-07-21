@@ -1,26 +1,42 @@
 use failure::Fallible;
 use log::error;
+use prost_amino::Message;
 use reqwest::{Client, Method, Response};
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{from_str, to_string, to_value};
 use url::Url;
 
 use crate::{
-    api_url::HTTP_URL,
-    model::{transaction, Error as BinanceError},
-    query::Query,
+    api_url::{CHAIN_ID, HTTP_URL},
+    key_manager::KeyManager,
+    model::{
+        query::{self, Query},
+        transaction::{Msg, StdSignMsg, StdSignature, StdTx, TxCommitResult},
+        Error as BinanceError,
+    },
 };
 
+mod transaction;
 pub mod websocket;
+
+pub use transaction::TransactionOptions;
 
 #[derive(Default)]
 pub struct BinanceDexClient {
     client: Client,
+    key_manager: Option<KeyManager>,
 }
 
 impl BinanceDexClient {
     pub fn new() -> Self {
         Default::default()
+    }
+
+    pub fn with_credentials(key_manager: KeyManager) -> Self {
+        Self {
+            key_manager: Some(key_manager),
+            ..Default::default()
+        }
     }
 
     pub async fn query<Q: Query>(&self, request: Q) -> Fallible<Q::Response> {
@@ -55,8 +71,91 @@ impl BinanceDexClient {
         }
     }
 
-    async fn broadcast(msg: transaction::Msg) -> Fallible<()> {
-        Ok(())
+    pub async fn fetch_acc_info(&self) -> Fallible<(i64, i64)> {
+        let account = self
+            .query(query::Account {
+                address: self
+                    .key_manager
+                    .as_ref()
+                    .unwrap()
+                    .account_address_str
+                    .clone(),
+            })
+            .await?;
+
+        Ok((account.account_number, account.sequence))
+    }
+
+    async fn post_tx(&self, body: String, sync: bool) -> Fallible<TxCommitResult> {
+        let url = format!("{}/broadcast", *HTTP_URL);
+        let mut url = Url::parse(&url)?;
+
+        if sync {
+            url.set_query(Some("sync=true"));
+        }
+
+        let req = self
+            .client
+            .request(Method::POST, url.as_str())
+            .header("user-agent", "binance-dex-rs")
+            .header("content-type", "text/plain")
+            .body(body.into_bytes());
+
+        let resp: Vec<TxCommitResult> = self.handle_response(req.send().await?).await?;
+
+        resp.into_iter()
+            .nth(0)
+            .ok_or_else(|| failure::format_err!("server sent an empty response"))
+    }
+
+    fn get_km(&self) -> Fallible<&KeyManager> {
+        match self.key_manager.as_ref() {
+            Some(km) => Ok(km),
+            None => Err(failure::format_err!("no key manager present")),
+        }
+    }
+
+    /// acc_info is a (account_number, sequence) pair.
+    /// See docs.binance.org/guides/concepts/accounts.html for info.
+    /// If not specified, most recent info will be fetched from the REST API.
+    async fn broadcast(&self, msg: Msg, options: TransactionOptions) -> Fallible<TxCommitResult> {
+        let km = self.get_km()?;
+
+        let (account_number, sequence) = match options.acc_info {
+            Some(a) => a,
+            None => self.fetch_acc_info().await?,
+        };
+        let memo = options.memo.unwrap_or(String::new());
+
+        let sign = StdSignMsg {
+            chain_id: (*CHAIN_ID).into(),
+            account_number,
+            sequence,
+            memo: memo.as_str(),
+            msgs: &[&msg],
+            source: 0,
+            data: None,
+        };
+
+        let sign = km.sign(&sign)?;
+        let sign = StdSignature {
+            pub_key: km.public_key.clone(),
+            signature: sign,
+            account_number,
+            sequence,
+        };
+
+        let tx = StdTx {
+            msgs: vec![msg],
+            signatures: vec![sign],
+            memo,
+            source: 0,
+            data: vec![],
+        };
+
+        let mut body = vec![];
+        tx.encode_length_delimited(&mut body)?;
+        self.post_tx(hex::encode(&body), options.sync).await
     }
 }
 
@@ -97,24 +196,23 @@ mod test {
 
     fn encode_msg(
         km: &KeyManager,
-        mut msg: Msg,
+        msg: Msg,
         account_number: i64,
         sequence: i64,
     ) -> Fallible<String> {
-        msg.preprocess();
+        let memo = String::new();
 
         let sign = StdSignMsg {
-            chain_id: "bnbchain-1000".into(),
+            chain_id: "bnbchain-1000",
             account_number,
             sequence,
-            memo: String::new(),
-            msgs: vec![msg.clone()],
+            memo: &memo,
+            msgs: &[&msg],
             source: 0,
             data: None,
         };
 
         let sign = km.sign(&sign)?;
-        println!("{}", hex::encode(&sign));
         let sign = StdSignature {
             pub_key: km.public_key.clone(),
             signature: sign,
@@ -125,7 +223,7 @@ mod test {
         let tx = StdTx {
             msgs: vec![msg],
             signatures: vec![sign],
-            memo: String::new(),
+            memo,
             source: 0,
             data: vec![],
         };
@@ -205,13 +303,6 @@ mod test {
              09ba70e01b54f4bd0bc76669f5712a5a66b9508acdf3aa5e4fde75fbe57622a12001"
         );
 
-        let transfer_result = "e401f0625dee0a6e2a2c87fa0a330a141d0e3086e8e4e0a53c38a90d55b\
-            d58b34d57d2fa120d0a03424e42108080e983b1de16120c0a034254431080a094a58d1d12330a146b571\
-            fc0a9961a7ddf45e49a88a4d83941fcabbe120d0a03424e42108080e983b1de16120c0a034254431080a\
-            094a58d1d126e0a26eb5ae98721027e69d96640300433654e016d218a8d7ffed751023d8efe81e55dedb\
-            d6754c97112407516bf5ac3b4bf7a9037a4ca33c5eaa250392d8c4c13489985de079626f7daec488513c\
-            5315ae25549aa612142aa9f41979f7b7fed4ae93c01449dabf1b0ef5218022003";
-
         let msg = Msg::Transfer(Transfer {
             inputs: vec![TransferIO {
                 address: km1.account_address.clone(),
@@ -230,38 +321,6 @@ mod test {
                 address: km2.account_address.clone(),
                 coins: vec![
                     Coin {
-                        denom: "BTC".into(),
-                        amount: 1000000000000,
-                    },
-                    Coin {
-                        denom: "BNB".into(),
-                        amount: 100000000000000,
-                    },
-                ],
-            }],
-        });
-
-        assert_eq!(encode_msg(&km1, msg, 2, 3)?, transfer_result);
-
-        // swapped order of coins
-        let msg = Msg::Transfer(Transfer {
-            inputs: vec![TransferIO {
-                address: km1.account_address.clone(),
-                coins: vec![
-                    Coin {
-                        denom: "BTC".into(),
-                        amount: 1000000000000,
-                    },
-                    Coin {
-                        denom: "BNB".into(),
-                        amount: 100000000000000,
-                    },
-                ],
-            }],
-            outputs: vec![TransferIO {
-                address: km2.account_address.clone(),
-                coins: vec![
-                    Coin {
                         denom: "BNB".into(),
                         amount: 100000000000000,
                     },
@@ -273,7 +332,15 @@ mod test {
             }],
         });
 
-        assert_eq!(encode_msg(&km1, msg, 2, 3)?, transfer_result);
+        assert_eq!(
+            encode_msg(&km1, msg, 2, 3)?,
+            "e401f0625dee0a6e2a2c87fa0a330a141d0e3086e8e4e0a53c38a90d55bd58b34d57d2fa120d0a03424e\
+             42108080e983b1de16120c0a034254431080a094a58d1d12330a146b571fc0a9961a7ddf45e49a88a4d8\
+             3941fcabbe120d0a03424e42108080e983b1de16120c0a034254431080a094a58d1d126e0a26eb5ae987\
+             21027e69d96640300433654e016d218a8d7ffed751023d8efe81e55dedbd6754c97112407516bf5ac3b4\
+             bf7a9037a4ca33c5eaa250392d8c4c13489985de079626f7daec488513c5315ae25549aa612142aa9f41\
+             979f7b7fed4ae93c01449dabf1b0ef5218022003"
+        );
 
         Ok(())
     }

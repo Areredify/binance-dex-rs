@@ -2,9 +2,11 @@ mod api_url;
 mod client;
 pub mod key_manager;
 pub mod model;
+pub mod util;
 
 pub use client::{websocket::BinanceDexWebsocket, BinanceDexClient};
 pub use model::{
+    fixed8::Fixed8,
     query,
     websocket::{Message as BinanceDexWsMessage, SubscriptionToken, Topic},
 };

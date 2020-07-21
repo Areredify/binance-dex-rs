@@ -1,8 +1,6 @@
-use std::cmp::Ordering;
-
 use prost_amino::Message;
 use prost_amino_derive::Message;
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer};
 
 use crate::key_manager::address_to_str;
 
@@ -18,9 +16,6 @@ use prost_amino::{
     bytes::{Buf, BufMut},
     DecodeError,
 };
-
-#[derive(Clone, Debug)]
-struct NoLen<T>(T);
 
 #[derive(Clone, Message)]
 #[amino_name = "auth/StdTx"]
@@ -38,17 +33,26 @@ pub struct StdTx {
 }
 
 #[derive(Serialize, Clone, Debug)]
-pub struct StdSignMsg {
+pub struct StdSignMsg<'a> {
     #[serde(serialize_with = "i64_to_string")]
     pub account_number: i64,
-    pub chain_id: String,
-    pub memo: String,
-    pub msgs: Vec<Msg>,
+    pub chain_id: &'a str,
+    pub memo: &'a str,
+    pub msgs: &'a [&'a Msg],
     #[serde(serialize_with = "i64_to_string")]
     pub sequence: i64,
     #[serde(serialize_with = "i64_to_string")]
     pub source: i64,
     pub data: Option<Vec<u8>>,
+}
+
+#[derive(Deserialize, Clone, Debug)]
+pub struct TxCommitResult {
+    pub ok: bool,
+    pub log: String,
+    pub hash: String,
+    pub code: i32,
+    pub data: String,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -101,21 +105,6 @@ impl Default for Msg {
     }
 }
 
-impl Msg {
-    pub fn preprocess(&mut self) {
-        match self {
-            Self::Transfer(m) => {
-                for i in &mut [&mut m.inputs, &mut m.outputs] {
-                    for j in i.iter_mut() {
-                        j.coins.sort();
-                    }
-                }
-            }
-            _ => (),
-        }
-    }
-}
-
 #[derive(Clone, Message)]
 pub struct StdSignature {
     #[prost_amino(bytes, tag = "1", amino_name = "tendermint/PubKeySecp256k1")]
@@ -150,6 +139,11 @@ pub struct CreateOrder {
     pub timeinforce: i64,
 }
 
+#[derive(Deserialize, Clone, Debug)]
+pub struct CreateOrderResponse {
+    pub order_id: String,
+}
+
 #[derive(Serialize, Clone, Message)]
 #[amino_name = "dex/CancelOrder"]
 pub struct CancelOrder {
@@ -162,24 +156,12 @@ pub struct CancelOrder {
     pub refid: String,
 }
 
-#[derive(Serialize, Clone, Message, Ord, Eq)]
+#[derive(Serialize, Clone, Message)]
 pub struct Coin {
     #[prost_amino(string, tag = "1")]
     pub denom: String,
     #[prost_amino(int64, tag = "2")]
     pub amount: i64,
-}
-
-impl PartialEq for Coin {
-    fn eq(&self, other: &Coin) -> bool {
-        self.denom == other.denom
-    }
-}
-
-impl PartialOrd for Coin {
-    fn partial_cmp(&self, other: &Coin) -> Option<Ordering> {
-        <String as PartialOrd>::partial_cmp(&self.denom, &other.denom)
-    }
 }
 
 #[derive(Serialize, Clone, Message)]
