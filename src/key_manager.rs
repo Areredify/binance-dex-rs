@@ -2,7 +2,6 @@ use std::io::Write;
 
 use bech32::{FromBase32, ToBase32};
 use failure::Fallible;
-use hex;
 use ripemd160::Ripemd160;
 use secp256k1::{PublicKey, Secp256k1, SecretKey, SignOnly};
 use serde::Serialize;

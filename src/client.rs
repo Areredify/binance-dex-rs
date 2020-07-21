@@ -104,7 +104,7 @@ impl BinanceDexClient {
         let resp: Vec<TxCommitResult> = self.handle_response(req.send().await?).await?;
 
         resp.into_iter()
-            .nth(0)
+            .next()
             .ok_or_else(|| failure::format_err!("server sent an empty response"))
     }
 
@@ -125,10 +125,10 @@ impl BinanceDexClient {
             Some(a) => a,
             None => self.fetch_acc_info().await?,
         };
-        let memo = options.memo.unwrap_or(String::new());
+        let memo = options.memo.unwrap_or_default();
 
         let sign = StdSignMsg {
-            chain_id: (*CHAIN_ID).into(),
+            chain_id: *CHAIN_ID,
             account_number,
             sequence,
             memo: memo.as_str(),
@@ -318,7 +318,7 @@ mod test {
                 ],
             }],
             outputs: vec![TransferIO {
-                address: km2.account_address.clone(),
+                address: km2.account_address,
                 coins: vec![
                     Coin {
                         denom: "BNB".into(),

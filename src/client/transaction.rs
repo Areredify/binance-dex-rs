@@ -58,9 +58,7 @@ impl Transfer {
 }
 
 impl BinanceDexClient {
-    /// acc_info is a (account_number, sequence) pair.
-    /// see docs.binance.org/guides/concepts/accounts.html for info.
-    /// If not specified, most recent info will be fetched from the REST API.
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_order(
         &self,
         base_symbol: &str,
