@@ -1,5 +1,3 @@
-use std::io::Write;
-
 use bech32::{FromBase32, ToBase32};
 use failure::Fallible;
 use ripemd160::Ripemd160;
@@ -8,6 +6,8 @@ use serde::Serialize;
 use sha2::{Digest, Sha256};
 
 use crate::api_url::NET_PREFIX;
+
+mod keystore;
 
 #[derive(Clone, Debug)]
 pub struct KeyManager {
@@ -18,18 +18,18 @@ pub struct KeyManager {
     pub public_key: Vec<u8>,
 }
 
-fn get_address(public_key: &[u8]) -> Fallible<Vec<u8>> {
+fn get_address(public_key: &[u8]) -> Vec<u8> {
     let mut sha = Sha256::default();
-    sha.write_all(&public_key)?;
+    sha.update(&public_key);
 
     let key = sha.finalize();
 
     let mut ripemd = Ripemd160::default();
-    ripemd.write_all(&key)?;
+    ripemd.update(&key);
 
     let address = ripemd.finalize();
 
-    Ok(address.as_slice().into())
+    address.as_slice().into()
 }
 
 pub fn address_to_str(address: &[u8]) -> Fallible<String> {
@@ -43,10 +43,14 @@ pub fn str_to_address(s: &str) -> Fallible<Vec<u8>> {
 impl KeyManager {
     pub fn from_private_key(private_key: &str) -> Fallible<KeyManager> {
         let private_key = hex::decode(private_key)?;
+        KeyManager::from_private_key_bytes(&private_key)
+    }
+
+    fn from_private_key_bytes(private_key: &[u8]) -> Fallible<KeyManager> {
         let private_key = SecretKey::from_slice(&private_key)?;
         let context = Secp256k1::signing_only();
         let public_key = PublicKey::from_secret_key(&context, &private_key).serialize();
-        let account_address = get_address(&public_key)?;
+        let account_address = get_address(&public_key);
         let public_key = public_key.to_vec();
         let account_address_str = address_to_str(&account_address)?;
 
@@ -62,7 +66,7 @@ impl KeyManager {
     pub fn sign<M: Serialize>(&self, msg: M) -> Fallible<Vec<u8>> {
         let bytes = serde_json::to_vec(&serde_json::to_value(msg)?)?;
         let mut sha = Sha256::default();
-        sha.write_all(&bytes)?;
+        sha.update(&bytes);
         let hash = sha.finalize();
         Ok(self
             .context
