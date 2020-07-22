@@ -52,12 +52,12 @@ impl Query for Peers {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Account {
+pub struct Account<'a> {
     #[serde(skip)]
-    pub address: String,
+    pub address: &'a str,
 }
 
-impl Query for Account {
+impl Query for Account<'_> {
     type Response = model::Account;
 
     fn get_endpoint(&self) -> String {
@@ -66,12 +66,12 @@ impl Query for Account {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct AccountSequence {
+pub struct AccountSequence<'a> {
     #[serde(skip)]
-    pub address: String,
+    pub address: &'a str,
 }
 
-impl Query for AccountSequence {
+impl Query for AccountSequence<'_> {
     type Response = model::AccountSequence;
 
     fn get_endpoint(&self) -> String {
@@ -119,12 +119,12 @@ impl Query for Fees {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct MarketDepth {
-    pub symbol: String,     // Market pair symbol, e.g. NNB-0AD_BNB
+pub struct MarketDepth<'a> {
+    pub symbol: &'a str,    // Market pair symbol, e.g. NNB-0AD_BNB
     pub limit: Option<u32>, // The limit of results. Allowed limits: [5, 10, 20, 50, 100, 500, 1000]
 }
 
-impl Query for MarketDepth {
+impl Query for MarketDepth<'_> {
     type Response = model::MarketDepth;
 
     fn get_endpoint(&self) -> String {
@@ -133,8 +133,8 @@ impl Query for MarketDepth {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct Candlestick {
-    pub symbol: String,
+pub struct Candlestick<'a> {
+    pub symbol: &'a str,
     pub interval: model::Intervals,
     pub limit: Option<u32>, // default 300; max 1000.
     #[serde(rename = "startTime")]
@@ -143,7 +143,7 @@ pub struct Candlestick {
     pub end_time: Option<u64>, // end time in milliseconds
 }
 
-impl Query for Candlestick {
+impl Query for Candlestick<'_> {
     type Response = Vec<model::Candlestick>;
 
     fn get_endpoint(&self) -> String {
@@ -164,8 +164,8 @@ pub enum OrderStatus {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
-pub struct ClosedOrders {
-    pub address: String,
+pub struct ClosedOrders<'a> {
+    pub address: &'a str,
     #[serde(rename = "start")]
     pub start_time: Option<u64>,
     #[serde(rename = "end")]
@@ -174,11 +174,11 @@ pub struct ClosedOrders {
     pub offset: Option<u32>,
     pub side: Option<model::OrderSide>,
     pub status: Option<OrderStatus>,
-    pub symbol: Option<String>,
+    pub symbol: Option<&'a str>,
     pub total: Option<i32>,
 }
 
-impl Query for ClosedOrders {
+impl Query for ClosedOrders<'_> {
     type Response = model::OrderList;
 
     fn get_endpoint(&self) -> String {
@@ -187,15 +187,15 @@ impl Query for ClosedOrders {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
-pub struct OpenOrders {
-    pub address: String,
+pub struct OpenOrders<'a> {
+    pub address: &'a str,
     pub limit: Option<u32>,
     pub offset: Option<u32>,
-    pub symbol: Option<String>,
+    pub symbol: Option<&'a str>,
     pub total: Option<i32>,
 }
 
-impl Query for OpenOrders {
+impl Query for OpenOrders<'_> {
     type Response = model::OrderList;
 
     fn get_endpoint(&self) -> String {
@@ -204,12 +204,12 @@ impl Query for OpenOrders {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct Order {
+pub struct Order<'a> {
     #[serde(skip)]
-    pub id: String,
+    pub id: &'a str,
 }
 
-impl Query for Order {
+impl Query for Order<'_> {
     type Response = model::Order;
 
     fn get_endpoint(&self) -> String {
@@ -220,11 +220,11 @@ impl Query for Order {
 /// *Description*: Gets 24 hour price change statistics for a market pair symbol. Updated every second.
 /// *Rate Limit*: 5 requests per IP per second.
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
-pub struct MarketTicker24hr {
-    pub symbol: Option<String>,
+pub struct MarketTicker24hr<'a> {
+    pub symbol: Option<&'a str>,
 }
 
-impl Query for MarketTicker24hr {
+impl Query for MarketTicker24hr<'_> {
     type Response = Vec<model::Ticker>;
 
     fn get_endpoint(&self) -> String {
@@ -234,10 +234,10 @@ impl Query for MarketTicker24hr {
 
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
 #[serde(rename_all = "camelCase")]
-pub struct Trades {
-    pub symbol: Option<String>,
-    pub address: Option<String>,
-    pub buyer_order_id: Option<String>,
+pub struct Trades<'a> {
+    pub symbol: Option<&'a str>,
+    pub address: Option<&'a str>,
+    pub buyer_order_id: Option<&'a str>,
     #[serde(rename = "end")]
     pub end_time: Option<u64>,
     pub start_time: Option<u64>,
@@ -245,13 +245,13 @@ pub struct Trades {
     pub block_height: Option<model::BlockHeight>,
     pub limit: Option<u32>,  // default 500; max 1000
     pub offset: Option<u32>, // default 0;
-    pub quote_asset: Option<String>,
-    pub seller_order_id: Option<String>,
+    pub quote_asset: Option<&'a str>,
+    pub seller_order_id: Option<&'a str>,
     pub side: Option<model::OrderSide>,
     pub total: Option<i32>,
 }
 
-impl Query for Trades {
+impl Query for Trades<'_> {
     type Response = model::TradePage;
 
     fn get_endpoint(&self) -> String {
@@ -260,8 +260,8 @@ impl Query for Trades {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
-pub struct BlockExchangeFee {
-    pub address: String,
+pub struct BlockExchangeFee<'a> {
+    pub address: &'a str,
     #[serde(rename = "start")]
     pub start_time: Option<u64>,
     #[serde(rename = "end")]
@@ -271,7 +271,7 @@ pub struct BlockExchangeFee {
     pub total: Option<i32>,
 }
 
-impl Query for BlockExchangeFee {
+impl Query for BlockExchangeFee<'_> {
     type Response = model::BlockExchangeFeePage;
 
     fn get_endpoint(&self) -> String {
@@ -281,16 +281,16 @@ impl Query for BlockExchangeFee {
 
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
 #[serde(rename_all = "camelCase")]
-pub struct AtomicSwaps {
+pub struct AtomicSwaps<'a> {
     pub start_time: Option<u64>,
     pub end_time: Option<u64>,
-    pub from_address: Option<String>, // | at least one of from_adress and to_adress
-    pub to_address: Option<String>,   // | should be provided
+    pub from_address: Option<&'a str>, // | at least one of from_adress and to_adress
+    pub to_address: Option<&'a str>,   // | should be provided
     pub limit: Option<u32>,
     pub offset: Option<u32>,
 }
 
-impl Query for AtomicSwaps {
+impl Query for AtomicSwaps<'_> {
     type Response = model::AtomicSwapPage;
 
     fn get_endpoint(&self) -> String {
@@ -299,12 +299,12 @@ impl Query for AtomicSwaps {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
-pub struct AtomicSwap {
+pub struct AtomicSwap<'a> {
     #[serde(skip)]
-    pub id: String,
+    pub id: &'a str,
 }
 
-impl Query for AtomicSwap {
+impl Query for AtomicSwap<'_> {
     type Response = model::AtomicSwap;
 
     fn get_endpoint(&self) -> String {
@@ -313,13 +313,13 @@ impl Query for AtomicSwap {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct Timelocks {
+pub struct Timelocks<'a> {
     #[serde(skip)]
-    address: String,
+    address: &'a str,
     id: i64,
 }
 
-impl Query for Timelocks {
+impl Query for Timelocks<'_> {
     type Response = model::TimeLocks;
 
     fn get_endpoint(&self) -> String {

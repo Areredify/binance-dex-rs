@@ -74,12 +74,7 @@ impl BinanceDexClient {
     pub async fn fetch_acc_info(&self) -> Fallible<(i64, i64)> {
         let account = self
             .query(query::Account {
-                address: self
-                    .key_manager
-                    .as_ref()
-                    .unwrap()
-                    .account_address_str
-                    .clone(),
+                address: &self.key_manager.as_ref().unwrap().account_address_str,
             })
             .await?;
 
