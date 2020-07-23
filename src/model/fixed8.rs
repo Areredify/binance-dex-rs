@@ -5,10 +5,11 @@ use std::{
 };
 
 // Fixed8 represents a fixed-point number with precision 10^-8
-#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Default)]
+#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Default, Debug)]
 pub struct Fixed8(pub i64);
 
 pub const FIXED8_DECIMALS: i64 = 100_000_000; // 10^8
+pub const MULT_TABLE: &[i64] = &[1, 10, 100, 1_000, 10_000, 100_000, 1_000_000, 10_000_000];
 
 impl Fixed8 {
     pub fn decimal(self) -> i64 {
@@ -16,7 +17,7 @@ impl Fixed8 {
     }
 }
 
-impl fmt::Debug for Fixed8 {
+impl fmt::Display for Fixed8 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -115,11 +116,16 @@ impl<'de> Visitor<'de> for Fixed8Visitor {
             .map_err(|_| E::custom("couldn't parse decimal part of fixed8 value"))?;
         let residual: i64 = match parts.next() {
             Some(value) => {
-                let value = if value.len() > 8 { &value[..8] } else { value };
+                if value == "" {
+                    0
+                } else {
+                    let value = if value.len() > 8 { &value[..8] } else { value };
 
-                value
-                    .parse()
-                    .map_err(|_| E::custom("couldn't parse float part of fixed8 value"))?
+                    value
+                        .parse::<i64>()
+                        .map_err(|_| E::custom("couldn't parse float part of fixed8 value"))?
+                        * MULT_TABLE[8 - value.len()]
+                }
             }
             None => 0,
         };
@@ -177,6 +183,9 @@ mod tests {
         assert_eq!(de("\"0.12300000\""), d);
         assert_eq!(de("\"-0.12300000\""), e);
         assert_eq!(de("\"52.000001235\""), a);
+        assert_eq!(de("\"0.1\""), Fixed8(FIXED8_DECIMALS / 10));
+        assert_eq!(de("\"0.01\""), Fixed8(FIXED8_DECIMALS / 100));
+        assert_eq!(de("\"0.0023\""), Fixed8(FIXED8_DECIMALS / 10000 * 23));
         assert_eq!(de("\"52\""), f);
     }
 }
