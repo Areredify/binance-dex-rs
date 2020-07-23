@@ -63,9 +63,9 @@ impl Mul<i64> for Fixed8 {
     }
 }
 
-impl MulAssign for Fixed8 {
-    fn mul_assign(&mut self, rhs: Self) {
-        self.0 *= rhs.0
+impl MulAssign<i64> for Fixed8 {
+    fn mul_assign(&mut self, rhs: i64) {
+        self.0 *= rhs
     }
 }
 
