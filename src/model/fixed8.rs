@@ -184,8 +184,11 @@ mod tests {
         assert_eq!(de("\"-0.12300000\""), e);
         assert_eq!(de("\"52.000001235\""), a);
         assert_eq!(de("\"0.1\""), Fixed8(FIXED8_DECIMALS / 10));
-        assert_eq!(de("\"0.01\""), Fixed8(FIXED8_DECIMALS / 100));
+        assert_eq!(de("\"0.10\""), Fixed8(FIXED8_DECIMALS / 10));
+        assert_eq!(de("\"0.10000\""), Fixed8(FIXED8_DECIMALS / 10));
+        assert_eq!(de("\"0.010\""), Fixed8(FIXED8_DECIMALS / 100));
         assert_eq!(de("\"0.0023\""), Fixed8(FIXED8_DECIMALS / 10000 * 23));
+        assert_eq!(de("\"0.0023000\""), Fixed8(FIXED8_DECIMALS / 10000 * 23));
         assert_eq!(de("\"52\""), f);
     }
 }
