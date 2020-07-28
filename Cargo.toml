@@ -1,0 +1,40 @@
+[package]
+name = "binance-dex-rs"
+version = "0.1.0"
+authors = [""]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+reqwest = { version = "0.10", features = ["json"] }
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1.0", features = ["derive"] }
+lazy_static = "1.4"
+log = "0.4"
+url = "2.1"
+failure = "0.1"
+serde_json = "1"
+serde_repr = "0.1"
+tokio = "0.2"
+tokio-tungstenite = { version = "0.10", features = ["connect", "tls"] }
+futures = "0.3"
+pin-project = "0.4"
+streamunordered = "0.5"
+
+secp256k1 = "0.17"
+hex = "0.4"
+sha2 = "0.9"
+sha3 = "0.9"
+ripemd160 = "0.9"
+bech32 = "0.7"
+pbkdf2 = "0.4"
+hmac = "0.8"
+aes-ctr = "0.4"
+
+prost-amino = { git = "https://github.com/Areredify/amino_rs.git" }
+prost-amino-derive = { git = "https://github.com/Areredify/amino_rs.git" }
+
+[dev-dependencies]
+tokio = { version = "0.2", features = ["macros", "rt-threaded"] }
+env_logger = "0.7"
