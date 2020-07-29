@@ -52,7 +52,7 @@ pub struct TxCommitResult {
     pub log: String,
     pub hash: String,
     pub code: i32,
-    pub data: String,
+    pub data: Option<String>,
 }
 
 #[derive(Serialize, Clone, Debug)]

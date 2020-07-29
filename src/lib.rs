@@ -4,7 +4,7 @@ pub mod key_manager;
 pub mod model;
 pub mod util;
 
-pub use client::{websocket::BinanceDexWebsocket, BinanceDexClient, TransactionOptions};
+pub use client::{websocket::BinanceDexWebsocket, BinanceDexClient, TransactionOptions, Transfer};
 pub use key_manager::KeyManager;
 pub use model::{
     fixed8::Fixed8,
