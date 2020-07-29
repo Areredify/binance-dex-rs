@@ -32,8 +32,8 @@ pbkdf2 = "0.4"
 hmac = "0.8"
 aes-ctr = "0.4"
 
-prost-amino = { git = "https://github.com/Areredify/amino_rs.git" }
-prost-amino-derive = { git = "https://github.com/Areredify/amino_rs.git" }
+prost-amino = { git = "https://github.com/1e9-io/amino_rs.git" }
+prost-amino-derive = { git = "https://github.com/1e9-io/amino_rs.git" }
 
 [dev-dependencies]
 tokio = { version = "0.2", features = ["macros", "rt-threaded"] }
