@@ -19,7 +19,7 @@ use crate::{
 mod transaction;
 pub mod websocket;
 
-pub use transaction::TransactionOptions;
+pub use transaction::{TransactionOptions, Transfer};
 
 #[derive(Default)]
 pub struct BinanceDexClient {
@@ -82,7 +82,7 @@ impl BinanceDexClient {
     }
 
     async fn post_tx(&self, body: String, sync: bool) -> Fallible<TxCommitResult> {
-        let url = format!("{}/broadcast", *HTTP_URL);
+        let url = format!("{}/api/v1/broadcast", *HTTP_URL);
         let mut url = Url::parse(&url)?;
 
         if sync {

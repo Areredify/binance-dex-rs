@@ -140,7 +140,7 @@ pub struct Account {
     pub account_number: i64,
     pub address: String,
     pub balances: Vec<Balance>,
-    pub public_key: Vec<u8>,
+    pub public_key: Option<Vec<u8>>,
     pub sequence: i64,
     pub flags: u64,
 }

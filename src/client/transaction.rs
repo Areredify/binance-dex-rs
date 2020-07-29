@@ -22,26 +22,43 @@ pub struct TransactionOptions {
     pub sync: bool,
 }
 
-#[derive(Clone, Debug)]
-pub struct Coin {
-    pub denom: String,
-    pub quantity: Fixed8,
-}
-
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Transfer {
     outputs: HashMap<String, BTreeMap<String, Fixed8>>,
 }
 
 impl Transfer {
+    pub fn new() -> Self {
+        Default::default()
+    }
+
     fn insert_coin(m: &mut BTreeMap<String, Fixed8>, denom: String, quantity: Fixed8) {
         *m.entry(denom).or_default() += quantity;
     }
 
-    pub fn add_coins(&mut self, reciever_address: String, coins: impl Iterator<Item = Coin>) {
+    pub fn single_coin(reciever_address: String, denom: String, quantity: Fixed8) -> Self {
+        let mut transfer = Self::new();
+        transfer.add_coins(reciever_address, std::iter::once((denom, quantity)));
+        transfer
+    }
+
+    pub fn multiple_coins(
+        reciever_address: String,
+        coins: impl Iterator<Item = (String, Fixed8)>,
+    ) -> Self {
+        let mut transfer = Self::new();
+        transfer.add_coins(reciever_address, coins);
+        transfer
+    }
+
+    pub fn add_coins(
+        &mut self,
+        reciever_address: String,
+        coins: impl Iterator<Item = (String, Fixed8)>,
+    ) {
         let self_coins = self.outputs.entry(reciever_address).or_default();
         for coin in coins {
-            Self::insert_coin(self_coins, coin.denom, coin.quantity);
+            Self::insert_coin(self_coins, coin.0, coin.1);
         }
     }
 
@@ -99,8 +116,11 @@ impl BinanceDexClient {
 
         let result = self.broadcast(msg, options).await?;
 
-        let resp = if result.data != "" && result.ok {
-            Some(serde_json::from_str(&result.data)?)
+        let resp = if result.ok {
+            result
+                .data
+                .as_ref()
+                .and_then(|s| serde_json::from_str(s).ok())
         } else {
             None
         };
